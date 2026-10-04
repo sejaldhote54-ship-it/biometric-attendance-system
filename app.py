@@ -8,6 +8,11 @@ import pickle
 import os
 import sqlite3
 from datetime import datetime
+DATA_DIR = "/data"
+os.makedirs(DATA_DIR, exist_ok=True)
+
+DATABASE_PATH = os.path.join(DATA_DIR, "attendance.db")
+FACE_DATA_PATH = os.path.join(DATA_DIR, "face_data.pkl")
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 # =========================================================
@@ -15,7 +20,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 # =========================================================
 
 def init_database():
-    conn = sqlite3.connect("attendance.db")
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -871,19 +876,18 @@ def register_face():
 
         # Existing data
         face_data = []
+if os.path.exists(FACE_DATA_PATH):
 
-        if os.path.exists("face_data.pkl"):
+    try:
 
-            try:
+        with open(
+            FACE_DATA_PATH,
+            "rb"
+        ) as file:
 
-                with open(
-                    "face_data.pkl",
-                    "rb"
-                ) as file:
-
-                    face_data = pickle.load(file)
-
-            except Exception:
+            face_data = pickle.load(file)
+       
+    except Exception:
 
                 face_data = []
 
@@ -903,16 +907,16 @@ def register_face():
             "encoding": new_encoding
         })
 
-        # Save data
-        with open(
-            "face_data.pkl",
-            "wb"
-        ) as file:
+       # Save data
+with open(
+    FACE_DATA_PATH,
+    "wb"
+) as file:
 
-            pickle.dump(
-                face_data,
-                file
-            )
+    pickle.dump(
+        face_data,
+        file
+    )
 
         return {
             "status": "success",
@@ -1003,15 +1007,15 @@ def recognize():
 
         unknown_encoding = face_encodings[0]
 
-        # Check registered data
-        if not os.path.exists("face_data.pkl"):
-            return {
-                "status": "failed",
-                "message": "No registered face found."
-            }
+       # Check registered data
+if not os.path.exists(FACE_DATA_PATH):
+    return {
+        "status": "failed",
+        "message": "No registered face found."
+    }
 
-        with open("face_data.pkl", "rb") as file:
-            face_data = pickle.load(file)
+with open(FACE_DATA_PATH, "rb") as file:
+    face_data = pickle.load(file)
 
         # Compare face
         for person in face_data:
@@ -1616,16 +1620,15 @@ def employee_recognize():
 
         unknown_encoding = face_encodings[0]
 
-        # Check registered faces
-        if not os.path.exists("face_data.pkl"):
-            return {
-                "status": "failed",
-                "message": "No registered face found."
-            }
+       # Check registered faces
+if not os.path.exists(FACE_DATA_PATH):
+    return {
+        "status": "failed",
+        "message": "No registered face found."
+    }
 
-        with open("face_data.pkl", "rb") as file:
-            face_data = pickle.load(file)
-
+with open(FACE_DATA_PATH, "rb") as file:
+    face_data = pickle.load(file)
         # Compare face
         for person in face_data:
 
